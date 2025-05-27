@@ -1,255 +1,238 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FileIcon, Paperclip, Reply, Send, X } from "lucide-react";
-import { cleanEmailAddress, truncateFileName } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { sendEmail } from "@/actions/send";
-import { useRef, useState } from "react";
-import { ParsedMessage } from "@/types";
-import { Badge } from "../ui/badge";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { toast } from "sonner";
+import { useActiveConnection } from '@/hooks/use-connections';
+import { useEmailAliases } from '@/hooks/use-email-aliases';
+import { EmailComposer } from '../create/email-composer';
+import { useHotkeysContext } from 'react-hotkeys-hook';
+import { useTRPC } from '@/providers/query-provider';
+import { useMutation } from '@tanstack/react-query';
+import { constructReplyBody } from '@/lib/utils';
+import { useThread } from '@/hooks/use-threads';
+import { useSession } from '@/lib/auth-client';
+import { serializeFiles } from '@/lib/schemas';
+import { useDraft } from '@/hooks/use-drafts';
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'use-intl';
+import type { Sender } from '@/types';
+import { useQueryState } from 'nuqs';
+import { toast } from 'sonner';
 
-export default function ReplyCompose({ emailData }: { emailData: ParsedMessage[] }) {
-  const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [messageContent, setMessageContent] = useState("");
-  const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
+interface ReplyComposeProps {
+  messageId?: string;
+}
 
-  const handleAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setIsUploading(true);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setAttachments([...attachments, ...Array.from(e.target.files)]);
-      } finally {
-        setIsUploading(false);
+export default function ReplyCompose({ messageId }: ReplyComposeProps) {
+  const [threadId] = useQueryState('threadId');
+  const { data: emailData, refetch } = useThread(threadId);
+  const { data: session } = useSession();
+  const [mode, setMode] = useQueryState('mode');
+  const { enableScope, disableScope } = useHotkeysContext();
+  const { data: aliases, isLoading: isLoadingAliases } = useEmailAliases();
+  const t = useTranslations();
+  const [draftId, setDraftId] = useQueryState('draftId');
+  const { data: draft, isLoading: isDraftLoading } = useDraft(draftId ?? null);
+  const trpc = useTRPC();
+  const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
+  const { data: activeConnection } = useActiveConnection();
+
+  // Find the specific message to reply to
+  const replyToMessage =
+    (messageId && emailData?.messages.find((msg) => msg.id === messageId)) || emailData?.latest;
+
+  // Initialize recipients and subject when mode changes
+  useEffect(() => {
+    if (!replyToMessage || !mode || !activeConnection?.email) return;
+
+    const userEmail = activeConnection.email.toLowerCase();
+    const senderEmail = replyToMessage.sender.email.toLowerCase();
+
+    // Set subject based on mode
+    const subject =
+      mode === 'forward'
+        ? `Fwd: ${replyToMessage.subject || ''}`
+        : replyToMessage.subject?.startsWith('Re:')
+          ? replyToMessage.subject
+          : `Re: ${replyToMessage.subject || ''}`;
+
+    if (mode === 'reply') {
+      // Reply to sender
+      const to: string[] = [];
+
+      // If the sender is not the current user, add them to the recipients
+      if (senderEmail !== userEmail) {
+        to.push(replyToMessage.sender.email);
+      } else if (replyToMessage.to && replyToMessage.to.length > 0 && replyToMessage.to[0]?.email) {
+        // If we're replying to our own email, reply to the first recipient
+        to.push(replyToMessage.to[0].email);
       }
-    }
-  };
 
-  const removeAttachment = (index: number) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
-  };
+      // Initialize email composer with these recipients
+      // Note: The actual initialization happens in the EmailComposer component
+    } else if (mode === 'replyAll') {
+      const to: string[] = [];
+      const cc: string[] = [];
 
-  const handleFocus = () => setIsTextAreaFocused(true);
-  const handleBlur = () => setIsTextAreaFocused(false);
+      // Add original sender if not current user
+      if (senderEmail !== userEmail) {
+        to.push(replyToMessage.sender.email);
+      }
 
-  const constructReplyBody = (
-    formattedMessage: string,
-    originalDate: string,
-    originalSender: { name?: string; email?: string } | undefined,
-    cleanedToEmail: string,
-    quotedMessage?: string,
-  ) => {
-    return `
-      <div style="font-family: Arial, sans-serif;">
-        <div style="margin-bottom: 20px;">
-          ${formattedMessage}
-        </div>
-        <div style="padding-left: 1em; margin-top: 1em; border-left: 2px solid #ccc; color: #666;">
-          <div style="margin-bottom: 1em;">
-            On ${originalDate}, ${originalSender?.name ? `${originalSender.name} ` : ""}${originalSender?.email ? `&lt;${cleanedToEmail}&gt;` : ""} wrote:
-          </div>
-          <div style="white-space: pre-wrap;">
-            ${quotedMessage}
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
-  const handleSendEmail = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    try {
-      const originalSubject = emailData[0]?.subject || "";
-      const subject = originalSubject.startsWith("Re:")
-        ? originalSubject
-        : `Re: ${originalSubject}`;
-
-      const originalSender = emailData[0]?.sender;
-      const cleanedToEmail = cleanEmailAddress(emailData[emailData.length - 1]?.sender?.email);
-      const originalDate = new Date(emailData[0]?.receivedOn || "").toLocaleString();
-      const quotedMessage = emailData[0]?.decodedBody;
-      const messageId = emailData[0]?.messageId;
-      const threadId = emailData[0]?.threadId;
-
-      const formattedMessage = messageContent
-        .split("\n")
-        .map((line) => `<div>${line || "<br/>"}</div>`)
-        .join("");
-
-      const replyBody = constructReplyBody(
-        formattedMessage,
-        originalDate,
-        originalSender,
-        cleanedToEmail,
-        quotedMessage,
-      );
-
-      const inReplyTo = messageId;
-
-      const existingRefs = emailData[0]?.references?.split(" ") || [];
-      const references = [...existingRefs, emailData[0]?.inReplyTo, cleanEmailAddress(messageId)]
-        .filter(Boolean)
-        .join(" ");
-
-      await sendEmail({
-        to: cleanedToEmail,
-        subject,
-        message: replyBody,
-        attachments,
-        headers: {
-          "In-Reply-To": inReplyTo ?? "",
-          References: references,
-          "Thread-Id": threadId ?? "",
-        },
+      // Add original recipients from To field
+      replyToMessage.to?.forEach((recipient) => {
+        const recipientEmail = recipient.email.toLowerCase();
+        if (recipientEmail !== userEmail && recipientEmail !== senderEmail) {
+          to.push(recipient.email);
+        }
       });
 
-      setMessageContent("");
-      toast.success("Email sent successfully!");
+      // Add CC recipients
+      replyToMessage.cc?.forEach((recipient) => {
+        const recipientEmail = recipient.email.toLowerCase();
+        if (recipientEmail !== userEmail && !to.includes(recipient.email)) {
+          cc.push(recipient.email);
+        }
+      });
+
+      // Initialize email composer with these recipients
+    } else if (mode === 'forward') {
+      // For forward, we start with empty recipients
+      // Just set the subject and include the original message
+    }
+  }, [mode, replyToMessage, activeConnection?.email]);
+
+  const handleSendEmail = async (data: {
+    to: string[];
+    cc?: string[];
+    bcc?: string[];
+    subject: string;
+    message: string;
+    attachments: File[];
+  }) => {
+    if (!replyToMessage || !activeConnection?.email) return;
+
+    try {
+      const userEmail = activeConnection.email.toLowerCase();
+
+      // Convert email strings to Sender objects
+      const toRecipients: Sender[] = data.to.map((email) => ({
+        email,
+        name: email.split('@')[0] || 'User',
+      }));
+
+      const ccRecipients: Sender[] | undefined = data.cc
+        ? data.cc.map((email) => ({
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
+        : undefined;
+
+      const bccRecipients: Sender[] | undefined = data.bcc
+        ? data.bcc.map((email) => ({
+            email,
+            name: email.split('@')[0] || 'User',
+          }))
+        : undefined;
+
+      const replyBody = constructReplyBody(
+        data.message,
+        new Date(replyToMessage.receivedOn || '').toLocaleString(),
+        replyToMessage.sender,
+        toRecipients,
+        replyToMessage.decodedBody,
+      );
+
+      await sendEmail({
+        to: toRecipients,
+        cc: ccRecipients,
+        bcc: bccRecipients,
+        subject: data.subject,
+        message: replyBody,
+        attachments: await serializeFiles(data.attachments),
+        fromEmail: aliases?.[0]?.email || userEmail,
+        headers: {
+          'In-Reply-To': replyToMessage?.messageId ?? '',
+          References: [
+            ...(replyToMessage?.references ? replyToMessage.references.split(' ') : []),
+            replyToMessage?.messageId,
+          ]
+            .filter(Boolean)
+            .join(' '),
+          'Thread-Id': replyToMessage?.threadId ?? '',
+        },
+        threadId: replyToMessage?.threadId,
+      });
+
+      // Reset states
+      setMode(null);
+      await refetch();
+      toast.success(t('pages.createEmail.emailSent'));
     } catch (error) {
-      console.error("Error sending email:", error);
-      toast.error("Failed to send email. Please try again.");
+      console.error('Error sending email:', error);
+      toast.error(t('pages.createEmail.failedToSendEmail'));
     }
   };
 
+  console.log('draftcontent', draft);
+
+  useEffect(() => {
+    if (mode) {
+      enableScope('compose');
+    } else {
+      disableScope('compose');
+    }
+    return () => {
+      disableScope('compose');
+    };
+  }, [mode, enableScope, disableScope]);
+
+  // Add effect to handle initial focus
+  const [shouldFocus, setShouldFocus] = useState(true);
+  useEffect(() => {
+    if (mode) {
+      setShouldFocus(true);
+    } else {
+      setShouldFocus(false);
+    }
+  }, [mode]);
+
+  if (!mode || !emailData) return null;
+
+  if (draftId && isDraftLoading) {
+    // wait for the draft if requesting one
+    return null;
+  }
+
   return (
-    <div className="w-full bg-offsetLight p-2 dark:bg-offsetDark">
-      <form
-        className={cn(
-          "flex h-72 flex-col space-y-2.5 rounded-[10px] border border-border px-2 py-4",
-          isTextAreaFocused ? "ring-2 ring-[#3D3D3D]" : "",
-        )}
-      >
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Reply className="h-4 w-4" />
-            <p className="truncate">
-              {emailData[emailData.length - 1]?.sender?.name} (
-              {emailData[emailData.length - 1]?.sender?.email})
-            </p>
-          </div>
-        </div>
-
-        <Textarea
-          ref={editorRef}
-          className="min-h-[40px] w-full flex-grow resize-none rounded-2xl border-0 bg-transparent leading-relaxed placeholder:text-muted-foreground/70 focus:outline-none md:text-base"
-          placeholder="Write your reply..."
-          spellCheck={true}
-          value={messageContent}
-          onChange={(e) => {
-            setMessageContent(e.target.value);
-          }}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-        />
-
-        {(attachments.length > 0 || isUploading) && (
-          <div className="relative z-50 min-h-[32px]">
-            <div className="hide-scrollbar absolute inset-x-0 flex gap-2 overflow-x-auto">
-              {isUploading && (
-                <Badge
-                  variant="secondary"
-                  className="inline-flex shrink-0 animate-pulse items-center bg-background/50 px-2 py-1.5 text-xs"
-                >
-                  Uploading...
-                </Badge>
-              )}
-              {attachments.map((file, index) => (
-                <Tooltip key={index}>
-                  <TooltipTrigger asChild>
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="inline-flex shrink-0 items-center gap-1 bg-background/50 px-2 py-1.5 text-xs"
-                    >
-                      <span className="max-w-[120px] truncate">{truncateFileName(file.name)}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-1 h-4 w-4 hover:bg-background/80"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          removeAttachment(index);
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="w-64 p-0">
-                    <div className="relative h-32 w-full">
-                      {file.type.startsWith("image/") ? (
-                        <Image
-                          src={URL.createObjectURL(file) || "/placeholder.svg"}
-                          alt={file.name}
-                          fill
-                          className="rounded-t-md object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center p-4">
-                          <FileIcon className="h-16 w-16 text-primary" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-secondary p-2">
-                      <p className="text-sm font-medium">{truncateFileName(file.name, 30)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Size: {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Last modified: {new Date(file.lastModified).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  className="h-8 w-8 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById("attachment-input")?.click();
-                  }}
-                >
-                  <Paperclip className="h-4 w-4" />
-                  <span className="sr-only">Add attachment</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Attach file</TooltipContent>
-            </Tooltip>
-            <input
-              type="file"
-              id="attachment-input"
-              className="hidden"
-              onChange={handleAttachment}
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-            />
-          </div>
-          <div className="mr-2 flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8">
-              Save draft
-            </Button>
-            <Button size="sm" className="h-8" onClick={handleSendEmail}>
-              Send
-            </Button>
-          </div>
-        </div>
-      </form>
+    <div className="w-full rounded-xl">
+      <EmailComposer
+        className="w-full !max-w-none border pb-1"
+        onSendEmail={handleSendEmail}
+        onClose={async () => {
+          await setMode(null);
+          await setDraftId(null);
+        }}
+        initialMessage={draft?.content}
+        initialTo={draft?.to}
+        initialSubject={draft?.subject}
+        threadContent={emailData.messages.map((message) => {
+          return {
+            body: message.decodedBody ?? '',
+            from: message.sender.name ?? message.sender.email,
+            to: message.to.reduce<string[]>((to, recipient) => {
+              if (recipient.name) {
+                to.push(recipient.name);
+              }
+              return to;
+            }, []),
+            cc: message.cc?.reduce<string[]>((cc, recipient) => {
+              if (recipient.name) {
+                cc.push(recipient.name);
+              }
+              return cc;
+            }, []),
+            subject: message.subject,
+          };
+        })}
+        autofocus={shouldFocus}
+      />
     </div>
   );
 }

@@ -1,363 +1,280 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, SlidersHorizontal, CalendarIcon, Trash2 } from "lucide-react";
-import { useSearchValue } from "@/hooks/use-search-value";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
-import { type DateRange } from "react-day-picker";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useDebounce } from "react-use";
-import { Toggle } from "../ui/toggle";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-
-const inboxes = ["inbox", "spam", "trash", "unread", "starred", "important", "sent", "draft"];
-
-function DateFilter({ date, setDate }: { date: DateRange; setDate: (date: DateRange) => void }) {
-  return (
-    <div className="grid gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id="date"
-            variant={"outline"}
-            className={cn(
-              "justify-start text-left font-normal",
-              !date && "text-muted-foreground",
-              "h-10 rounded-xl bg-muted/50",
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date or a range</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto rounded-xl p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={(range) => range && setDate(range)}
-            numberOfMonths={2}
-            disabled={(date) => date > new Date()}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
+import { parseNaturalLanguageSearch, parseNaturalLanguageDate } from '@/lib/utils';
+import { useSearchValue } from '@/hooks/use-search-value';
+import { useState, useEffect, useCallback } from 'react';
+import { type DateRange } from 'react-day-picker';
+import { Input } from '@/components/ui/input';
+import { useLocation } from 'react-router';
+import { useForm } from 'react-hook-form';
+import { Search } from '@/components/icons/icons';
+import { X } from 'lucide-react';
+import { format } from 'date-fns';
+import React from 'react';
 
 type SearchForm = {
   subject: string;
   from: string;
   to: string;
+  cc: string;
+  bcc: string;
   q: string;
   dateRange: DateRange;
   category: string;
   folder: string;
+  has: any;
+  fileName: any;
+  deliveredTo: string;
+  unicorn: string;
 };
 
 export function SearchBar() {
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  // const [popoverOpen, setPopoverOpen] = useState(false);
   const [, setSearchValue] = useSearchValue();
-  const [value, setValue] = useState<SearchForm>({
-    folder: "",
-    subject: "",
-    from: "",
-    to: "",
-    q: "",
-    dateRange: {
-      from: undefined,
-      to: undefined,
-    },
-    category: "",
-  });
+  const [isSearching, setIsSearching] = useState(false);
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const form = useForm<SearchForm>({
-    defaultValues: value,
+    defaultValues: {
+      folder: '',
+      subject: '',
+      from: '',
+      to: '',
+      cc: '',
+      bcc: '',
+      q: '',
+      dateRange: {
+        from: undefined,
+        to: undefined,
+      },
+      category: '',
+      has: '',
+      fileName: '',
+      deliveredTo: '',
+      unicorn: '',
+    },
   });
 
-  useEffect(() => {
-    const subscription = form.watch((data) => {
-      setValue(data as SearchForm);
-    });
-    return () => subscription.unsubscribe();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [form.watch]);
+  const q = form.watch('q');
 
-  useDebounce(
-    () => {
-      submitSearch(value);
+  useEffect(() => {
+    if (pathname !== '/mail/inbox') {
+      resetSearch();
+    }
+  }, [pathname]);
+
+  const submitSearch = useCallback(
+    async (data: SearchForm) => {
+      setIsSearching(true);
+      let searchTerms = [];
+
+      try {
+        if (data.q.trim()) {
+          const searchTerm = data.q.trim();
+
+          // Parse natural language date queries
+          const dateRange = parseNaturalLanguageDate(searchTerm);
+          if (dateRange) {
+            if (dateRange.from) {
+              // Format date according to Gmail's requirements (YYYY/MM/DD)
+              const fromDate = format(dateRange.from, 'yyyy/MM/dd');
+              searchTerms.push(`after:${fromDate}`);
+            }
+            if (dateRange.to) {
+              // Format date according to Gmail's requirements (YYYY/MM/DD)
+              const toDate = format(dateRange.to, 'yyyy/MM/dd');
+              searchTerms.push(`before:${toDate}`);
+            }
+
+            // For date queries, we don't want to search the content
+            const cleanedQuery = searchTerm
+              .replace(/emails?\s+from\s+/i, '')
+              .replace(/\b\d{4}\b/g, '')
+              .replace(
+                /\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi,
+                '',
+              )
+              .trim();
+
+            if (cleanedQuery) {
+              searchTerms.push(cleanedQuery);
+            }
+          } else {
+            // Parse natural language search patterns
+            const parsedTerm = parseNaturalLanguageSearch(searchTerm);
+            if (parsedTerm !== searchTerm) {
+              searchTerms.push(parsedTerm);
+            } else {
+              if (searchTerm.includes('@')) {
+                searchTerms.push(`from:${searchTerm}`);
+              } else {
+                searchTerms.push(
+                  `(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`,
+                );
+              }
+            }
+          }
+        }
+
+        // Add filters
+        if (data.folder) searchTerms.push(`in:${data.folder.toLowerCase()}`);
+        if (data.has) searchTerms.push(`has:${data.has.toLowerCase()}`);
+        if (data.fileName) searchTerms.push(`filename:${data.fileName}`);
+        if (data.deliveredTo) searchTerms.push(`deliveredto:${data.deliveredTo.toLowerCase()}`);
+        if (data.unicorn) searchTerms.push(`+${data.unicorn}`);
+
+        let searchQuery = searchTerms.join(' ');
+        searchQuery = extractMetaText(searchQuery) || '';
+
+        console.log('Final search query:', {
+          value: searchQuery,
+          highlight: data.q,
+          folder: data.folder ? data.folder.toUpperCase() : '',
+          isLoading: true,
+          isAISearching: false,
+        });
+
+        setSearchValue({
+          value: searchQuery,
+          highlight: data.q,
+          folder: data.folder ? data.folder.toUpperCase() : '',
+          isLoading: true,
+          isAISearching: false,
+        });
+      } catch (error) {
+        console.error('Search error:', error);
+        if (data.q) {
+          const searchTerm = data.q.trim();
+          const parsedTerm = parseNaturalLanguageSearch(searchTerm);
+          if (parsedTerm !== searchTerm) {
+            searchTerms.push(parsedTerm);
+          } else {
+            if (searchTerm.includes('@')) {
+              searchTerms.push(`from:${searchTerm}`);
+            } else {
+              searchTerms.push(
+                `(from:${searchTerm} OR from:"${searchTerm}" OR subject:"${searchTerm}" OR "${searchTerm}")`,
+              );
+            }
+          }
+        }
+        setSearchValue({
+          value: searchTerms.join(' '),
+          highlight: data.q,
+          folder: data.folder ? data.folder.toUpperCase() : '',
+          isLoading: true,
+          isAISearching: false,
+        });
+      } finally {
+        setIsSearching(false);
+      }
     },
-    250,
-    [value],
+    [setSearchValue],
   );
 
-  const submitSearch = (data: SearchForm) => {
-    const from = data.from ? `from:(${data.from})` : "";
-    const to = data.to ? `to:(${data.to})` : "";
-    const subject = data.subject ? `subject:(${data.subject})` : "";
-    const dateAfter = data.dateRange.from
-      ? `after:${format(data.dateRange.from, "MM/dd/yyyy")}`
-      : "";
-    const dateBefore = data.dateRange.to ? `before:${format(data.dateRange.to, "MM/dd/yyyy")}` : "";
-    const category = data.category ? `category:(${data.category})` : "";
-    const searchQuery = `${data.q} ${from} ${to} ${subject} ${dateAfter} ${dateBefore} ${category}`;
-    const folder = data.folder ? data.folder.toUpperCase() : "";
-
-    setSearchValue({
-      value: searchQuery,
-      highlight: data.q,
-      folder: folder,
+  const resetSearch = useCallback(() => {
+    form.reset({
+      folder: '',
+      subject: '',
+      from: '',
+      to: '',
+      cc: '',
+      bcc: '',
+      q: '',
+      dateRange: {
+        from: undefined,
+        to: undefined,
+      },
+      category: '',
+      has: '',
+      fileName: '',
+      deliveredTo: '',
+      unicorn: '',
     });
-  };
-
-  const resetSearch = () => {
-    form.reset();
     setSearchValue({
-      value: "",
-      highlight: "",
-      folder: "",
+      value: '',
+      highlight: '',
+      folder: '',
+      isLoading: false,
+      isAISearching: false,
     });
-  };
-
-  // might be bad but the alternatives are less readable and intuitive,
-  // maybe to something else if we have to add more filters/search options
-  const filtering =
-    value.q.length > 0 ||
-    value.from.length > 0 ||
-    value.to.length > 0 ||
-    value.dateRange.from ||
-    value.dateRange.to ||
-    value.category ||
-    value.folder;
+  }, [form, setSearchValue]);
 
   return (
-    <div className="relative flex-1 md:max-w-[600px]">
+    <div className="relative flex-1">
       <form className="relative flex items-center" onSubmit={form.handleSubmit(submitSearch)}>
-        <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-        <Input
-          placeholder="Search"
-          autoFocus
-          className="h-8 w-full rounded-[8px] border-none bg-muted/50 pl-9 pr-14 text-muted-foreground shadow-none ring-1 ring-muted transition-colors placeholder:text-muted-foreground/70 hover:bg-muted focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring"
-          {...form.register("q")}
+      <Search
+          className="absolute left-2.5 top-[10px] z-10 h-3.5 w-3.5 fill-[#6D6D6D] dark:fill-[#727272]"
+          aria-hidden="true"
         />
-        <div className="absolute right-2 flex items-center gap-1.5">
-          {filtering && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 rounded-lg p-0 text-muted-foreground/70 transition-colors hover:bg-muted/50 hover:text-foreground"
+
+        <div className="relative w-full">
+          <Input
+            placeholder={'Search'}
+            className="text-muted-foreground placeholder:text-muted-foreground/70 h-[32px] w-full select-none rounded-md border bg-white pl-8 pr-14 shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 dark:border-none dark:bg-[#141414]"
+            {...form.register('q')}
+            value={q}
+            disabled={isSearching}
+          />
+          {q && (
+            <button
+              type="button"
               onClick={resetSearch}
+              className="text-muted-foreground hover:text-foreground absolute right-2 top-1/2 -translate-y-1/2 transition-colors"
+              disabled={isSearching}
             >
-              <Trash2 className="h-4 w-4 text-inherit" aria-hidden="true" />
-            </Button>
+              <X className="h-4 w-4" />
+            </button>
           )}
-          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 rounded-lg p-0 text-muted-foreground/70 transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <SlidersHorizontal
-                  className="h-4 w-4 text-inherit transition-colors"
-                  aria-hidden="true"
-                />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-[min(calc(100vw-2rem),400px)] rounded-xl border bg-card/95 p-4 shadow-lg sm:w-[500px] md:w-[600px]"
-              side="bottom"
-              sideOffset={15}
-              alignOffset={-8}
-              align="end"
-            >
-              <div className="space-y-5">
-                <div>
-                  <h2 className="mb-3 text-xs font-semibold">Quick Filters</h2>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs hover:bg-muted"
-                      onClick={() => form.setValue("q", "is:unread")}
-                    >
-                      Unread
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs hover:bg-muted"
-                      onClick={() => form.setValue("q", "has:attachment")}
-                    >
-                      Has Attachment
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs hover:bg-muted"
-                      onClick={() => form.setValue("q", "is:starred")}
-                    >
-                      Starred
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                <div className="grid gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold">Search in</label>
-                    <Select
-                      onValueChange={(value) => form.setValue("folder", value)}
-                      value={form.watch("folder")}
-                    >
-                      <SelectTrigger className="h-8 rounded-xl bg-muted/50 capitalize">
-                        <SelectValue placeholder="All Mail" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {inboxes.map((inbox) => (
-                          <SelectItem key={inbox} value={inbox} className="capitalize">
-                            {inbox}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold">Subject</label>
-                    <Input
-                      placeholder="Email subject"
-                      {...form.register("subject")}
-                      className="h-8 rounded-xl bg-muted/50"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold">From</label>
-                      <Input
-                        placeholder="Sender"
-                        {...form.register("from")}
-                        className="h-8 rounded-xl bg-muted/50"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold">To</label>
-                      <Input
-                        placeholder="Recipient"
-                        {...form.register("to")}
-                        className="h-8 rounded-xl bg-muted/50"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold">Date Range</label>
-                    <DateFilter
-                      date={value.dateRange}
-                      setDate={(range) => form.setValue("dateRange", range)}
-                    />
-                  </div>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                <div>
-                  <h2 className="mb-3 text-xs font-semibold">Category</h2>
-                  <div className="flex flex-wrap gap-2">
-                    <Toggle
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs transition-colors data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
-                      pressed={form.watch("category") === "primary"}
-                      onPressedChange={(pressed) =>
-                        form.setValue("category", pressed ? "primary" : "")
-                      }
-                    >
-                      Primary
-                    </Toggle>
-                    <Toggle
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs transition-colors data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
-                      pressed={form.watch("category") === "updates"}
-                      onPressedChange={(pressed) =>
-                        form.setValue("category", pressed ? "updates" : "")
-                      }
-                    >
-                      Updates
-                    </Toggle>
-                    <Toggle
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs transition-colors data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
-                      pressed={form.watch("category") === "promotions"}
-                      onPressedChange={(pressed) =>
-                        form.setValue("category", pressed ? "promotions" : "")
-                      }
-                    >
-                      Promotions
-                    </Toggle>
-                    <Toggle
-                      variant="outline"
-                      size="sm"
-                      className="h-7 rounded-xl bg-muted/50 text-xs transition-colors data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:ring-1 data-[state=on]:ring-primary/20"
-                      pressed={form.watch("category") === "social"}
-                      onPressedChange={(pressed) =>
-                        form.setValue("category", pressed ? "social" : "")
-                      }
-                    >
-                      Social
-                    </Toggle>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Button
-                    onClick={resetSearch}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 rounded-xl text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-8 rounded-xl bg-primary text-xs text-primary-foreground shadow-none transition-colors hover:bg-primary/90"
-                    type="submit"
-                    onClick={() => setPopoverOpen(false)}
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
         </div>
       </form>
     </div>
   );
+}
+
+function extractMetaText(text: string) {
+  // Check if the text contains a query enclosed in quotes
+  const quotedQueryMatch = text.match(/["']([^"']+)["']/);
+  if (quotedQueryMatch && quotedQueryMatch[1]) {
+    // Return just the content inside the quotes
+    return quotedQueryMatch[1].trim();
+  }
+
+  // Check for common patterns where the query is preceded by explanatory text
+  const patternMatches = [
+    // Match "Here is the converted query:" pattern
+    text.match(/here is the (converted|enhanced) query:?\s*["']?([^"']+)["']?/i),
+    // Match "The search query is:" pattern
+    text.match(/the (search query|query) (is|would be):?\s*["']?([^"']+)["']?/i),
+    // Match "I've converted your query to:" pattern
+    text.match(/i('ve| have) converted your query to:?\s*["']?([^"']+)["']?/i),
+    // Match "Converting to:" pattern
+    text.match(/converting to:?\s*["']?([^"']+)["']?/i),
+  ].filter(Boolean);
+
+  if (patternMatches.length > 0 && patternMatches[0]) {
+    // Return the captured query part (last capture group)
+    const match = patternMatches[0];
+
+    if (!match[match.length - 1]) return;
+
+    return match[match.length - 1]!.trim();
+  }
+
+  // If no patterns match, remove common explanatory text and return
+  let cleanedText = text
+    // Remove "I focused on..." explanations
+    .replace(/I focused on.*$/im, '')
+    // Remove "Here's a precise..." explanations
+    .replace(/Here's a precise.*$/im, '')
+    // Remove any explanations after the query
+    .replace(/\n\nThis (query|search).*$/im, '')
+    // Remove any explanations before the query
+    .replace(/^.*?(from:|to:|subject:|is:|has:|after:|before:)/i, '$1')
+    // Clean up any remaining quotes
+    .replace(/["']/g, '')
+    // Remove extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return cleanedText;
 }

@@ -1,122 +1,34 @@
-# Mail0.io
+<p align="center">
+  <picture>
+    <source srcset="apps/mail/public/white-icon.svg" media="(prefers-color-scheme: dark)">
+    <img src="apps/mail/public/black-icon.svg" alt="Zero Logo" width="64" style="background-color: #000; padding: 10px;"/>
+  </picture>
+</p>
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,BETTER_AUTH_TRUSTED_ORIGINS,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GITHUB_REDIRECT_URI&envDescription=For%20more%20info%20on%20setting%20up%20your%20API%20keys%2C%20checkout%20the%20Readme%20below&envLink=https%3A%2F%2Fgithub.com%2Fnizzyabi%2FMail0%2Fblob%2Fmain%2FREADME.md&project-name=0&repository-name=0&redirect-url=0.email&demo-title=0&demo-description=An%20open%20source%20email%20app&demo-url=0.email)
+# Zero
 
 An Open-Source Gmail Alternative for the Future of Email
 
-## Table of Contents <!-- omit from toc -->
+## What is Zero?
 
-- [What is Mail0.io?](#what-is-mail0io)
-- [Why Mail0.io?](#why-mail0io)
-- [Our Mission](#our-mission)
-- [Documentation](#documentation)
-- [Roadmap 🛤️](#roadmap-️)
-  - [1. Core Email Connectivity](#1-core-email-connectivity)
-  - [2. Email Usage Improvements](#2-email-usage-improvements)
-  - [3. Infrastructure](#3-infrastructure)
-- [Development Priorities](#development-priorities)
-- [Join the Movement 🚀](#join-the-movement-)
-  - [Stay Tuned](#stay-tuned)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Environment Variables](#environment-variables)
-  - [Running Locally](#running-locally)
-- [Contribute](#contribute)
-- [Issues](#issues)
-  - [Create a new issue](#create-a-new-issue)
-  - [Solve an issue](#solve-an-issue)
-- [Pull Request](#pull-request)
-- [License](#license)
+Zero is an open-source AI email solution that gives users the power to **self-host** their own email app while also integrating external services like Gmail and other email providers. Our goal is to modernize and improve emails through AI agents to truly modernize emails.
 
-## What is Mail0.io?
+## Why Zero?
 
-Mail0.io is an open-source email solution that gives users the power to **self-host** their own email app while also integrating external services like Gmail and other email providers. Our goal is to put **control, privacy, and customization** back into the hands of users—whether they choose to host their email independently or manage multiple inboxes from a single, customizable platform.
+Most email services today are either **closed-source**, **data-hungry**, or **too complex to self-host**.
+0.email is different:
 
-## Why Mail0.io?
-
-Most email services today are either **closed-source**, **data-hungry**, or **too complex to self-host**. Mail0.io is different:
-
-✅ **Fully Open-Source** – No hidden agendas, no walled gardens. 100% transparency.
-🔒 **Data Privacy First** – Your emails, your data. No tracking, no selling, no middlemen.
-⚙️ **Self-Hosting Freedom** – Run your own email app with ease.
-📬 **Unified Inbox** – Connect multiple email providers like Gmail, Outlook, and more.
-🎨 **Customizable UI & Features** – Tailor your email experience the way you want it.
-🚀 **Developer-Friendly** – Built with extensibility and integrations in mind.
-
-## Our Mission
-
-We believe email should be:
-
-1. **Yours** – You control where your data is stored.
-2. **Flexible** – Use it however you want—self-hosted or connected to third-party providers.
-3. **Open** – Transparent development, open collaboration, and community-driven innovation.
-4. **User-Friendly** – No need for technical expertise to get started.
-
-## Documentation
-
-- [License](LICENSE) - Project license and terms
-- [Roadmap](ROADMAP.md) - Development plans and future features
-
-## Roadmap 🛤️
-
-This document outlines the development roadmap for Mail0.io. Our vision is to create a powerful, user-friendly, and privacy-focused email experience.
-
-### 1. Core Email Connectivity
-
-- Connect main email providers
-- Support for multiple email accounts
-- Unified inbox experience
-
-### 2. Email Usage Improvements
-
-- AI-powered email assistance
-- Advanced drag-and-drop tools
-- Customizable keyboard shortcuts
-- Performance optimization
-- Enhanced search capabilities
-- Deep customization options
-
-### 3. Infrastructure
-
-- Domain management
-- Optimized email client
-- Self-hosting support
-
-## Development Priorities
-
-1. Building a robust foundation for email management
-2. Implementing user-requested features
-3. Ensuring seamless integration with existing email providers
-4. Maintaining high performance and reliability
-
-We welcome community input and contributions to help shape these features and priorities. If you have suggestions or would like to contribute, please:
-
-1. Open an issue to discuss new feature ideas
-2. Submit pull requests for improvements
-3. Join discussions in existing issues
-
-This roadmap is a living document and will be updated as development progresses and priorities evolve based on community feedback and technological advances.
-
-## Join the Movement 🚀
-
-Mail0.io is not just another email app—it's a **vision** for a better, more open, and user-controlled email ecosystem. If you believe in **privacy**, **open-source software**, and **giving users control**, we'd love for you to join us!
-
-📢 **Follow our progress** – Stay updated on GitHub as we build Mail0.io.
-💡 **Contribute** – Share your ideas, suggest features, and help shape the project.
-🤝 **Community-driven** – Our goal is to create an email solution **for the people, by the people**.
-
-### Stay Tuned
-
-We're just getting started. If you're excited about a future where **email belongs to users, not corporations**, let's make it happen together.
-
----
-
-🤍 **Mail0.io – Email, Reimagined.**
+- ✅ **Open-Source** – No hidden agendas, fully transparent.
+- 🦾 **AI Driven** - Enhance your emails with Agents & LLMs.
+- 🔒 **Data Privacy First** – Your emails, your data. Zero does not track, collect, or sell your data in any way. Please note: while we integrate with external services, the data passed through them is not under our control and falls under their respective privacy policies and terms of service.
+- ⚙️ **Self-Hosting Freedom** – Run your own email app with ease.
+- 📬 **Unified Inbox** – Connect multiple email providers like Gmail, Outlook, and more.
+- 🎨 **Customizable UI & Features** – Tailor your email experience the way you want it.
+- 🚀 **Developer-Friendly** – Built with extensibility and integrations in mind.
 
 ## Tech Stack
 
-Mail0.io is built with modern and reliable technologies:
+Zero is built with modern and reliable technologies:
 
 - **Frontend**: Next.js, React, TypeScript, TailwindCSS, Shadcn UI
 - **Backend**: Node.js, Drizzle ORM
@@ -130,39 +42,92 @@ Mail0.io is built with modern and reliable technologies:
 
 **Required Versions:**
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
-- Docker >= 20.10.0
+- [Node.js](https://nodejs.org/en/download) (v18 or higher)
+- [pnpm](https://pnpm.io) (v10 or higher)
+- [Docker](https://docs.docker.com/engine/install/) (v20 or higher)
 
-Before running the application, you'll need to set up several services and environment variables:
+Before running the application, you'll need to set up services and configure environment variables. For more details on environment variables, see the [Environment Variables](#environment-variables) section.
 
-1. **Setup Local Services with Dev Container and Docker**
+### Setup Options
 
-   - Make sure you have [Docker](https://docs.docker.com/get-docker/), [NodeJS](https://nodejs.org/en/download/), and [pnpm](https://pnpm.io/installation) installed.
-   - Open codebase as a container in [VSCode](https://code.visualstudio.com/) or your favorite VSCode fork.
-   - Run the following commands in order to populate your dependencies and setup docker
+You can set up Zero in two ways:
 
-     ```
-     pnpm install
-     pnpm docker:up
-     ```
+<details open>
+<summary><b>Standard Setup (Recommended)</b></summary>
 
-   - Run the following commands to clean up after yourself
+#### Quick Start Guide
 
-     ```
-     pnpm docker:down
-     rm -rf node_modules
-     rm pnpm-lock.yaml
-     ```
+1. **Clone and Install**
 
-   - Run the following commands if you are unable to start any of the services
+   ```bash
+   # Clone the repository
+   git clone https://github.com/Mail-0/Zero.git
+   cd Zero
 
-     ```
-     rm -rf node_modules
-     rm pnpm-lock.yaml
-     ```
+   # Install dependencies
+   pnpm install
 
-2. **Better Auth Setup**
+   # Start database locally
+   pnpm docker:db:up
+   ```
+
+2. **Set Up Environment**
+
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
+   - Start the database with the provided docker compose setup: `pnpm docker:db:up`
+   - Initialize the database: `pnpm db:push`
+
+3. **Start the App**
+
+   ```bash
+   pnpm dev
+   ```
+
+4. **Open in Browser**
+
+   Visit [http://localhost:3000](http://localhost:3000)
+   </details>
+
+<details open>
+<summary><b>Devcontainer Setup</b></summary>
+
+#### Quick Start guide
+
+1. **Clone and Install**
+
+   ```bash
+   # Clone the repository
+   git clone https://github.com/Mail-0/Zero.git
+   cd Zero
+   ```
+
+   Then open the code in devcontainer and install the dependencies:
+
+   ```
+   pnpm install
+
+   # Start the database locally
+   pnpm docker:db:up
+   ```
+
+2. **Set Up Environment**
+
+   - Run `pnpm nizzy env` to setup your environment variables
+   - Run `pnpm nizzy sync` to sync your environment variables and types
+   - Start the database with the provided docker compose setup: `pnpm docker:db:up`
+   - Initialize the database: `pnpm db:push`
+
+3. **Start The App**
+   ```bash
+   pnpm dev
+   ```
+   Visit [http://localhost:3000](http://localhost:3000)
+     </details>
+
+### Environment Setup
+
+1. **Better Auth Setup**
 
    - Open the `.env` file and change the BETTER_AUTH_SECRET to a random string. (Use `openssl rand -hex 32` to generate a 32 character string)
 
@@ -170,7 +135,7 @@ Before running the application, you'll need to set up several services and envir
      BETTER_AUTH_SECRET=your_secret_key
      ```
 
-3. **Google OAuth Setup**
+2. **Google OAuth Setup** (Required for Gmail integration)
 
    - Go to [Google Cloud Console](https://console.cloud.google.com)
    - Create a new project
@@ -182,17 +147,14 @@ Before running the application, you'll need to set up several services and envir
    - Create OAuth 2.0 credentials (Web application type)
    - Add authorized redirect URIs:
      - Development:
-       - `http://localhost:3000/api/auth/callback/google`
-       - `http://localhost:3000/api/v1/mail/auth/google/callback`
+       - `http://localhost:8787/api/auth/callback/google`
      - Production:
        - `https://your-production-url/api/auth/callback/google`
-       - `https://your-production-url/api/v1/mail/auth/google/callback`
    - Add to `.env`:
 
      ```env
      GOOGLE_CLIENT_ID=your_client_id
      GOOGLE_CLIENT_SECRET=your_client_secret
-     GOOGLE_REDIRECT_URI=http://localhost:3000/api/v1/mail/auth/google/callback
      ```
 
    - Add yourself as a test user:
@@ -202,99 +164,107 @@ Before running the application, you'll need to set up several services and envir
      - Add your email and click 'Save'
 
 > [!WARNING]
-> The `GOOGLE_REDIRECT_URI` must match **exactly** what you configure in the Google Cloud Console, including the protocol (http/https), domain, and path - these are provided above.
+> The authorized redirect URIs in Google Cloud Console must match **exactly** what you configure in the `.env`, including the protocol (http/https), domain, and path - these are provided above.
 
-4. **GitHub OAuth Setup**
+3. **Autumn Setup** (Required for some encryption)
 
-   - Go to [GitHub Developer Setting](https://github.com/settings/developers)
-   - Create a new OAuth App
-   - Add authorized redirect URIs:
-
-     - Development:
-       - `http://localhost:3000/api/auth/callback/github`
-     - Production:
-       - `https://your-production-url/api/auth/callback/github`
+   -Go to [Autumn](https://useautumn.com/)
+   -For Local Use, click [onboarding](https://app.useautumn.com/sandbox/onboarding) button and generate an Autumn Secret Key
+   -For production, select the production mode from upper left corner and generate an fill the other fields. After that, generate an Autumn Secret Key
 
    - Add to `.env`:
 
-     ```env
-     GITHUB_CLIENT_ID=your_client_id
-     GITHUB_CLIENT_SECRET=your_client_secret
-     ```
+   ```env
+   AUTUMN_SECRET_KEY=your_autumn_secret
+   ```
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and configure the following variables:
+Run `pnpm nizzy env` to setup your environment variables. It will copy the `.env.example` file to `.env` and fill in the variables for you.
+For local development a connection string example is provided in the `.env.example` file located in the same folder as the database.
 
-```env
-# Auth
-BETTER_AUTH_SECRET=     # Required: Secret key for authentication
+### Database Setup
 
-# Google OAuth (Optional)
-GOOGLE_CLIENT_ID=       # Required for Gmail integration
-GOOGLE_CLIENT_SECRET=   # Required for Gmail integration
-GOOGLE_REDIRECT_URI=    # Required for Gmail integration
+Zero uses PostgreSQL for storing data. Here's how to set it up:
 
-# Database
-DATABASE_URL=          # Required: PostgreSQL connection string
-```
+1. **Start the Database**
 
-### Update the PostgreSQL database accordingly
+   Run this command to start a local PostgreSQL instance:
 
-Drizzle will apply the schema migrations set in `.env`
+   ```bash
+   pnpm docker:db:up
+   ```
 
-```bash
-pnpm db:push
-```
+   This creates a database with:
 
-- Use `pnpm db:studio` to view and manage your data
+   - Name: `zerodotemail`
+   - Username: `postgres`
+   - Password: `postgres`
+   - Port: `5432`
 
-### Running Locally
+2. **Set Up Database Connection**
 
-Run the development server:
+   Make sure your database connection string is in `.env` file. And you have ran `pnpm nizzy sync` to sync the latest env.
 
-```bash
-pnpm dev
-```
+   For local development use:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/zerodotemail"
+   ```
+
+3. **Database Commands**
+
+   - **Set up database tables**:
+
+     ```bash
+     pnpm db:push
+     ```
+
+   - **Create migration files** (after schema changes):
+
+     ```bash
+     pnpm db:generate
+     ```
+
+   - **Apply migrations**:
+
+     ```bash
+     pnpm db:migrate
+     ```
+
+   - **View database content**:
+     ```bash
+     pnpm db:studio
+     ```
+     > If you run `pnpm dev` in your terminal, the studio command should be automatically running with the app.
 
 ## Contribute
 
-1. You can fork the repository and make changes to your forked repository. Once you have made your changes, you can create a pull request to the main branch.
-2. To add code to the main branch, make a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request). **Your code will always be reviewed by a maintainer, not yourself!**
+Please refer to the [contributing guide](.github/CONTRIBUTING.md).
 
-## Issues
+If you'd like to help with translating Zero to other languages, check out our [translation guide](.github/TRANSLATION.md).
 
-### Create a new issue
+## Star History
 
-If you spot a problem with the docs, [search if an issue already exists](https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests#search-by-the-title-body-or-comments). If a related issue doesn't exist, you can open a new issue using a relevant [issue form](https://github.com/nizzyabi/Mail0/issues/new?template=Blank+issue).
+[![Star History Chart](https://api.star-history.com/svg?repos=Mail-0/Zero&type=Timeline)](https://www.star-history.com/#Mail-0/Zero&Timeline)
 
-### Solve an issue
+## This project wouldn't be possible without these awesome companies
 
-Scan through our [existing issues](https://github.com/nizzyabi/Mail0/issues) to find one that interests you. You can narrow down the search using `labels` as filters. For more information, see "[Label reference](https://docs.github.com/en/contributing/collaborating-on-github-docs/label-reference)". As a general rule, we don't assign issues to anyone. If you find an issue to work on, you are welcome to open a PR with a fix.
+<div style="display: flex; justify-content: center;">
+  <a href="https://vercel.com" style="text-decoration: none;">
+    <img src="public/vercel.png" alt="Vercel" width="96"/>
+  </a>
+  <a href="https://better-auth.com" style="text-decoration: none;">
+    <img src="public/better-auth.png" alt="Better Auth" width="96"/>
+  </a>
+  <a href="https://orm.drizzle.team" style="text-decoration: none;">
+    <img src="public/drizzle-orm.png" alt="Drizzle ORM" width="96"/>
+  </a>
+  <a href="https://coderabbit.com" style="text-decoration: none;">
+    <img src="public/coderabbit.png" alt="Coderabbit AI" width="96"/>
+  </a>
+</div>
 
-## Pull Request
+## 🤍 The team
 
-When you're finished with the changes, create a pull request, also known as a PR.
-
-- Fill the "Ready for review" template so that we can review your PR. This template helps reviewers understand your changes as well as the purpose of your pull request.
-- Don't forget to [link PR to issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) if you are solving one.
-- Enable the checkbox to [allow maintainer edits](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/allowing-changes-to-a-pull-request-branch-created-from-a-fork) so the branch can be updated for a merge.
-  Once you submit your PR, a reviewer will review your proposal. We may ask questions or request additional information.
-- We may ask for changes to be made before a PR can be merged, either using [suggested changes](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/incorporating-feedback-in-your-pull-request) or pull request comments. You can apply suggested changes directly through the UI. You can make any other changes in your fork and then commit them to your branch.
-- As you update your PR and apply changes, mark each conversation as [resolved](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/commenting-on-a-pull-request#resolving-conversations).
-- If you run into any merge issues, check out this [git tutorial](https://github.com/skills/resolve-merge-conflicts) to help you resolve merge conflicts and other issues.
-
-## License
-
-Mail0.io is licensed under the MIT License. This means you can:
-
-✅ Use the software commercially
-✅ Modify the source code
-✅ Distribute your modifications
-✅ Use and modify the software privately
-
-The only requirement is that you include the original copyright and license notice in any copy of the software/source.
-
-See the [LICENSE](LICENSE) file for the full license text.
+Curious who makes Zero? Here are our [contributors and maintainers](https://0.email/contributors)

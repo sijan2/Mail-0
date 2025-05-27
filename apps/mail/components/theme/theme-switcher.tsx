@@ -1,18 +1,25 @@
-"use client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useEffect, useState } from 'react';
 
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useEffect, useState } from "react";
-
-import { Laptop, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
-
+import { type MessageKey } from '@/config/navigation';
+import { Laptop, Moon, Sun } from 'lucide-react';
+import { useTranslations } from 'use-intl';
+import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
 interface ModeToggleProps {
   className?: string;
 }
 
 export function ModeToggle({ className }: ModeToggleProps) {
   const [mounted, setMounted] = useState(false);
+
+  const t = useTranslations();
 
   // Fixes SSR hydration
   useEffect(() => {
@@ -24,7 +31,7 @@ export function ModeToggle({ className }: ModeToggleProps) {
   async function handleThemeChange(newTheme: string) {
     let nextResolvedTheme = newTheme;
 
-    if (newTheme === "system" && systemTheme) {
+    if (newTheme === 'system' && systemTheme) {
       nextResolvedTheme = systemTheme;
     }
 
@@ -33,9 +40,9 @@ export function ModeToggle({ className }: ModeToggleProps) {
     }
 
     if (document.startViewTransition && nextResolvedTheme !== resolvedTheme) {
-      document.documentElement.style.viewTransitionName = "theme-transition";
+      document.documentElement.style.viewTransitionName = 'theme-transition';
       await document.startViewTransition(update).finished;
-      document.documentElement.style.viewTransitionName = "";
+      document.documentElement.style.viewTransitionName = '';
     } else {
       update();
     }
@@ -46,39 +53,37 @@ export function ModeToggle({ className }: ModeToggleProps) {
   }
 
   return (
-    <ToggleGroup
-      type="single"
-      className={cn("h-9 max-w-xs justify-start", className)}
-      suppressHydrationWarning
-      value={theme}
-      onValueChange={handleThemeChange}
-    >
-      <ToggleGroupItem
-        suppressHydrationWarning
-        value="light"
-        className="flex flex-1 items-center gap-2"
-      >
-        <Sun className="h-5 w-5" />
-        <span className="sr-only">Light</span>
-      </ToggleGroupItem>
-
-      <ToggleGroupItem
-        suppressHydrationWarning
-        value="dark"
-        className="flex flex-1 items-center gap-2"
-      >
-        <Moon className="h-5 w-5" />
-        <span className="sr-only">Dark</span>
-      </ToggleGroupItem>
-
-      <ToggleGroupItem
-        suppressHydrationWarning
-        value="system"
-        className="flex flex-1 items-center gap-2"
-      >
-        <Laptop className="h-5 w-5" />
-        <span className="sr-only">System</span>
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <Select value={theme} onValueChange={handleThemeChange}>
+      <SelectTrigger className={cn(className)}>
+        <SelectValue placeholder="Select theme">
+          <div className="flex items-center gap-2 capitalize">
+            {theme === 'dark' && <Moon className="h-4 w-4" />}
+            {theme === 'light' && <Sun className="h-4 w-4" />}
+            {theme === 'system' && <Laptop className="h-4 w-4" />}
+            {t(`common.themes.${theme}` as MessageKey)}
+          </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="dark">
+          <div className="flex items-center gap-2">
+            <Moon className="h-4 w-4" />
+            {t('common.themes.dark')}
+          </div>
+        </SelectItem>
+        <SelectItem value="system">
+          <div className="flex items-center gap-2">
+            <Laptop className="h-4 w-4" />
+            {t('common.themes.system')}
+          </div>
+        </SelectItem>
+        <SelectItem value="light">
+          <div className="flex items-center gap-2">
+            <Sun className="h-4 w-4" />
+            {t('common.themes.light')}
+          </div>
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 }

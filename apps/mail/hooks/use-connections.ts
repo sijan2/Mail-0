@@ -1,20 +1,14 @@
-import { IConnection } from "@/types";
-import axios from "axios";
-import useSWR from "swr";
-
-const fetchConnections = () => axios.get("/api/v1/mail/connections").then((r) => r.data);
+import { useTRPC } from '@/providers/query-provider';
+import { useQuery } from '@tanstack/react-query';
 
 export const useConnections = () => {
-  // override the fetcher
-  const { data, error, isLoading, mutate } = useSWR<{ connections: IConnection[] }>(
-    "/api/v1/mail/connections",
-    fetchConnections,
-  );
+  const trpc = useTRPC();
+  const connectionsQuery = useQuery(trpc.connections.list.queryOptions(void 0));
+  return connectionsQuery;
+};
 
-  return {
-    data: data?.connections,
-    error,
-    isLoading,
-    mutate,
-  };
+export const useActiveConnection = () => {
+  const trpc = useTRPC();
+  const connectionsQuery = useQuery(trpc.connections.getDefault.queryOptions(void 0));
+  return connectionsQuery;
 };

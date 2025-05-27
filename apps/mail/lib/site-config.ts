@@ -1,44 +1,52 @@
-import { Metadata } from "next";
+const TITLE = 'Zero';
+const DESCRIPTION =
+  'Experience email the way you want with 0 - the first open source email app that puts your privacy and safety first.';
 
-const TITLE = "0 Email";
-const DESCRIPTION = "An Open Source Gmail Alternative.";
-
-const BASE_URL = "https://mail0.io";
-
-export const siteConfig: Metadata = {
+export const siteConfig = {
   title: TITLE,
   description: DESCRIPTION,
   icons: {
-    icon: "/favicon.ico",
+    icon: '/favicon.ico',
   },
-  applicationName: "0 Email",
-  creator: "Open Source Developers",
-
-  category: "AU",
+  applicationName: 'Zero',
+  creator: '@nizzyabi @bruvimtired @ripgrim @needleXO @dakdevs @mrgsub',
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: `${import.meta.env.VITE_PUBLIC_APP_URL}/og-api/home`,
+        width: 1200,
+        height: 630,
+        alt: TITLE,
+      },
+    ],
+  },
+  category: 'Email Client',
   alternates: {
-    canonical: BASE_URL,
+    canonical: import.meta.env.VITE_PUBLIC_APP_URL,
   },
   keywords: [
-    "Mail",
-    "Email",
-    "Open Source",
-    "Email Client",
-    "Gmail Alternative",
-    "Webmail",
-    "Secure Email",
-    "Email Management",
-    "Email Platform",
-    "Communication Tool",
-    "Productivity",
-    "Business Email",
-    "Personal Email",
-    "Mail Server",
-    "Email Software",
-    "Collaboration",
-    "Message Management",
-    "Digital Communication",
-    "Email Service",
-    "Web Application",
+    'Mail',
+    'Email',
+    'Open Source',
+    'Email Client',
+    'Gmail Alternative',
+    'Webmail',
+    'Secure Email',
+    'Email Management',
+    'Email Platform',
+    'Communication Tool',
+    'Productivity',
+    'Business Email',
+    'Personal Email',
+    'Mail Server',
+    'Email Software',
+    'Collaboration',
+    'Message Management',
+    'Digital Communication',
+    'Email Service',
+    'Web Application',
   ],
-  metadataBase: new URL(BASE_URL),
+  //   metadataBase: new URL(import.meta.env.VITE_PUBLIC_APP_URL!),
 };

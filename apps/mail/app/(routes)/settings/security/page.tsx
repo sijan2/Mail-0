@@ -1,49 +1,106 @@
-import { SettingsCard } from "@/components/settings/settings-card";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { KeyRoundIcon } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
+import { SettingsCard } from '@/components/settings/settings-card';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { useTranslations } from 'use-intl';
+import { useForm } from 'react-hook-form';
+import { KeyRound } from 'lucide-react';
+import { useState } from 'react';
+import * as z from 'zod';
+
+const formSchema = z.object({
+  twoFactorAuth: z.boolean(),
+  loginNotifications: z.boolean(),
+});
 
 export default function SecurityPage() {
+  const [isSaving, setIsSaving] = useState(false);
+  const t = useTranslations();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      twoFactorAuth: false,
+      loginNotifications: true,
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+
+    // TODO: Save settings in user's account
+    setTimeout(() => {
+      console.log(values);
+      setIsSaving(false);
+    }, 1000);
+  }
+
   return (
     <div className="grid gap-6">
       <SettingsCard
-        title="Security"
-        description="Manage your security preferences and account protection."
+        title={t('pages.settings.security.title')}
+        description={t('pages.settings.security.description')}
         footer={
-          <div className="flex items-center gap-2">
-            <Button className="text-xs sm:text-base" variant="outline">
-              <KeyRoundIcon className="mr-2 h-4 w-4" />
-              Change Password
-            </Button>
-            <Button className="text-xs sm:text-base" variant="destructive">
-              Delete Account
+          <div className="flex gap-4">
+            <Button variant="destructive">{t('pages.settings.security.deleteAccount')}</Button>
+            <Button type="submit" form="security-form" disabled={isSaving}>
+              {isSaving ? t('common.actions.saving') : t('common.actions.saveChanges')}
             </Button>
           </div>
         }
       >
-        <div className="grid gap-6">
-          <div className="flex flex-col gap-6 divide-y">
-            <div className="flex items-center justify-between pt-2">
-              <div className="space-y-1">
-                <Label className="text-base">Two-Factor Authentication</Label>
-                <p className="text-sm text-muted-foreground">
-                  Add an extra layer of security to your account
-                </p>
-              </div>
-              <Switch id="2fa" />
+        <Form {...form}>
+          <form id="security-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="flex w-full flex-col items-center gap-5 md:flex-row">
+              <FormField
+                control={form.control}
+                name="twoFactorAuth"
+                render={({ field }) => (
+                  <FormItem className="bg-popover flex w-full flex-row items-center justify-between rounded-lg border p-4 md:w-auto">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        {t('pages.settings.security.twoFactorAuth')}
+                      </FormLabel>
+                      <FormDescription>
+                        {t('pages.settings.security.twoFactorAuthDescription')}
+                      </FormDescription>
+                    </div>
+                    <FormControl className="ml-4">
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="loginNotifications"
+                render={({ field }) => (
+                  <FormItem className="bg-popover flex w-full flex-row items-center justify-between rounded-lg border p-4 md:w-auto">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        {t('pages.settings.security.loginNotifications')}
+                      </FormLabel>
+                      <FormDescription>
+                        {t('pages.settings.security.loginNotificationsDescription')}
+                      </FormDescription>
+                    </div>
+                    <FormControl className="ml-4">
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-            <div className="flex items-center justify-between pt-6">
-              <div className="space-y-1">
-                <Label className="text-base">Login Notifications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get notified about new login attempts
-                </p>
-              </div>
-              <Switch id="login-notifications" defaultChecked />
-            </div>
-          </div>
-        </div>
+          </form>
+        </Form>
       </SettingsCard>
     </div>
   );
